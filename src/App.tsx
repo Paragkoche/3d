@@ -1,6 +1,6 @@
 import "./App.css";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { Environment, OrbitControls, useTexture } from "@react-three/drei";
 import { useGLTF } from "@react-three/drei";
 import "./App.css";
 import { useState } from "react";
@@ -34,7 +34,8 @@ function App() {
   const [fabric, setFabric] = useState("/EG-14.jpg");
   return (
     <div className="body">
-      <Canvas camera={{ position: [0, 2, 500], fov: 50 }}>
+      <Canvas shadows camera={{ position: [0, 2, 500], fov: 50 }}>
+        <Environment background files="/warm_restaurant_4k.hdr" />
         <ambientLight intensity={0.5} />
         <Character fabric={fabric} />
         <OrbitControls
