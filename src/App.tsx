@@ -1,5 +1,5 @@
 import "./App.css";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import { useGLTF } from "@react-three/drei";
 import "./App.css";
@@ -17,12 +17,23 @@ function Character({ fabric }: { fabric: string }) {
   });
   return <primitive object={scene} scale={1.5} />;
 }
-
+function CameraLogger() {
+  const { camera } = useThree();
+  useFrame(() => {
+    console.log(`Zoom: ${camera.zoom.toFixed(2)}`);
+    console.log(
+      `Position: x=${camera.position.x.toFixed(
+        2
+      )}, y=${camera.position.y.toFixed(2)}, z=${camera.position.z.toFixed(2)}`
+    );
+  });
+  return null;
+}
 function App() {
   const [fabric, setFabric] = useState("/EG-14.jpg");
   return (
     <div className="body">
-      <Canvas camera={{ position: [0, 2, 5], fov: 50 }}>
+      <Canvas camera={{ position: [0, 2, 500], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <Character fabric={fabric} />
         <OrbitControls
