@@ -1,5 +1,5 @@
 import "./App.css";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useTexture } from "@react-three/drei";
 import { useGLTF } from "@react-three/drei";
 import "./App.css";
