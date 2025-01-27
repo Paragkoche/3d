@@ -32,10 +32,11 @@ function Character({ fabric }: { fabric: string }) {
 // }
 function App() {
   const [fabric, setFabric] = useState("/EG-14.jpg");
+  const [env, setEnv] = useState("/warm_restaurant_4k.hdr");
   return (
     <div className="body">
       <Canvas shadows camera={{ position: [0, 2, 500], fov: 50 }}>
-        <Environment background files="/warm_restaurant_4k.hdr" />
+        <Environment background files={env} />
         <ambientLight intensity={0.5} />
         <Character fabric={fabric} />
         <OrbitControls
@@ -56,6 +57,16 @@ function App() {
             </button>
             <button onClick={() => setFabric("/EG-16.jpg")}>
               <img src="/EG-16.jpg" />
+            </button>
+          </div>
+        </div>
+        <div>
+          <div>
+            <button onClick={() => setEnv("/brown_photostudio_02_4k.hdr")}>
+              <img src="/05.jpg" />
+            </button>
+            <button onClick={() => setEnv("/warm_restaurant_4k.hdr")}>
+              <img src="/download.png" />
             </button>
           </div>
         </div>
