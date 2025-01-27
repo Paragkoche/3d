@@ -11,24 +11,25 @@ function Character({ fabric }: { fabric: string }) {
     if (child.isMesh) {
       if (child.name == "Fabric") {
         child.material.map = fabricTexture;
+
         child.material.needsUpdate = true;
       }
     }
   });
   return <primitive object={scene} scale={1.5} />;
 }
-function CameraLogger() {
-  const { camera } = useThree();
-  useFrame(() => {
-    console.log(`Zoom: ${camera.zoom.toFixed(2)}`);
-    console.log(
-      `Position: x=${camera.position.x.toFixed(
-        2
-      )}, y=${camera.position.y.toFixed(2)}, z=${camera.position.z.toFixed(2)}`
-    );
-  });
-  return null;
-}
+// function CameraLogger() {
+//   const { camera } = useThree();
+//   useFrame(() => {
+//     console.log(`Zoom: ${camera.zoom.toFixed(2)}`);
+//     console.log(
+//       `Position: x=${camera.position.x.toFixed(
+//         2
+//       )}, y=${camera.position.y.toFixed(2)}, z=${camera.position.z.toFixed(2)}`
+//     );
+//   });
+//   return null;
+// }
 function App() {
   const [fabric, setFabric] = useState("/EG-14.jpg");
   return (
