@@ -1,3 +1,5 @@
+"use client";
+
 import { Canvas, useLoader } from "@react-three/fiber";
 import {
   useGLTF,
@@ -10,6 +12,7 @@ import {
 import { RGBELoader } from "three-stdlib";
 import "./App.css";
 import { useState } from "react";
+import { Button } from "react-day-picker";
 const Char = (props: any) => {
   const { nodes, scene } = useGLTF("/model.glb");
   const texture = useLoader(
@@ -47,35 +50,17 @@ const Char = (props: any) => {
   );
 };
 
-const App = () => {
-  const [fabric, setFabric] = useState("/EG-14.jpg");
-  const [bg, setbg] = useState("#f0f0f0");
+export const Viewer = (props: { fabric: string[]; background: string[] }) => {
+  const [Fabric, setFabric] = useState(props.fabric[0]);
+  const [bg, setBg] = useState(props.background[0]);
+
   return (
-    <div className="body">
+    <div className="flex w-full h-full ">
       <Canvas shadows camera={{ position: [-5, 200, 500], fov: 50 }}>
         <color attach={"background"} args={[bg]} />
         <ambientLight intensity={0.1 * Math.PI} />
         <spotLight decay={0} position={[5, 5, -10]} angle={0.15} />
-        <Char fabric={fabric} color={bg} />
-        {/* <AccumulativeShadows
-          temporal
-          frames={100}
-          // color={"}
-          colorBlend={2}
-          toneMapped={true}
-          alphaTest={0.9}
-          opacity={1}
-          scale={12}
-          position={[0, -0.5, 0]}
-        >
-          <RandomizedLight
-            amount={8}
-            radius={10}
-            ambient={0.5}
-            position={[5, 5, -10]}
-            bias={0.001}
-          />
-        </AccumulativeShadows> */}
+        <Char fabric={Fabric} color={bg} />
         <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr" />
         <OrbitControls
           makeDefault
@@ -85,32 +70,25 @@ const App = () => {
           maxPolarAngle={Math.PI / 2}
         />
       </Canvas>
-      <div className="controller">
-        <div>
-          <button onClick={() => setFabric("/EG-14.jpg")}>
-            <img src="/EG-14.jpg" />
-          </button>
-          <button onClick={() => setFabric("/EG-15.jpg")}>
-            <img src="/EG-15.jpg" />
-          </button>
-          <button onClick={() => setFabric("/EG-16.jpg")}>
-            <img src="/EG-16.jpg" />
-          </button>
+
+      <div className="w-1/2 flex items-center justify-center">
+        <div className="flex w-full justify-around">
+          {props.fabric.map((v, i) => (
+            <Button key={i} onClick={() => setFabric(v)}>
+              <img className="w-12" src={v} />
+            </Button>
+          ))}
         </div>
-        <div>
-          <button onClick={() => setbg("#f0f0f0")}>
-            <img src="https://placehold.co/600x400/f0f0f0/f0f0f0" />
-          </button>
-          <button onClick={() => setbg("#e76f51")}>
-            <img src="https://placehold.co/600x400/e76f51/e76f51" />
-          </button>
-          <button onClick={() => setbg("#f1faee")}>
-            <img src="https://placehold.co/600x400/f1faee/f1faee" />
-          </button>
+        <div className="flex w-full justify-around">
+          {props.fabric.map((v, i) => (
+            <Button
+              key={i}
+              onClick={() => setBg(v)}
+              className={`w-[24px] h-[24px] bg-[${v}]`}
+            ></Button>
+          ))}
         </div>
       </div>
     </div>
   );
 };
-
-export default App;
