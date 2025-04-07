@@ -60,8 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", token);
       setAdmin({ username });
       router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      toast.error(axiosError.response?.data.message || axiosError.message);
     }
   };
 
@@ -75,8 +76,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", token);
       setAdmin({ username });
       router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      toast.error(axiosError.response?.data.message || axiosError.message);
     }
   };
 
@@ -95,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

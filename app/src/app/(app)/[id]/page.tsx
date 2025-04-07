@@ -5,7 +5,7 @@ import { Viewer } from "../_components/3D";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
+  // searchParams?: { [key: string]: string | string[] | undefined };
 };
 
 const Page = ({ params }: PageProps) => {

@@ -11,9 +11,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers/auth-provider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { PropsWithChildren, ReactElement, useTransition } from "react";
+
+// import { useSearchParams } from "next/navigation";
+import { PropsWithChildren, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -27,8 +27,8 @@ const formSchema = z.object({
 type UserFormValue = z.infer<typeof formSchema>;
 
 export default function UserAuthForm(props: PropsWithChildren) {
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl");
+  // const searchParams = useSearchParams();
+  // const callbackUrl = searchParams.get("callbackUrl");
   const [loading, startTransition] = useTransition();
 
   const form = useForm<UserFormValue>({
@@ -42,7 +42,7 @@ export default function UserAuthForm(props: PropsWithChildren) {
   const onSubmit = async (data: UserFormValue) => {
     startTransition(() => {
       createUser(data.username, data.password);
-      // toast.success("Signed In Successfully!");
+      toast.success("Signed In Successfully!");
     });
   };
 

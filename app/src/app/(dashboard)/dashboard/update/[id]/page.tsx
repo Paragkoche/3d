@@ -3,7 +3,7 @@ import UpdateModelForm from "../../../_components/update-model";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
+  // searchParams?: { [key: string]: string | string[] | undefined };
 };
 const page = async ({ params }: PageProps) => {
   const { id } = await params;
