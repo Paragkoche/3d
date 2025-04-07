@@ -15,6 +15,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API;
 
 // Schema
 const formSchema = z.object({
@@ -102,7 +103,7 @@ export default function AddModelForm() {
         }
 
         const response = await fetch(
-          "http://127.0.0.1:8000/models/create_with_fibers/",
+          `${API_BASE_URL}/models/create_with_fibers/`,
           {
             method: "POST",
             body: formData,
