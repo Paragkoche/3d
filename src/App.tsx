@@ -18,6 +18,8 @@ const Char = (props: any) => {
   );
   const fabricTexture = useTexture(props.fabric);
   scene.traverse((child: any) => {
+    console.log(child);
+
     if (child.isMesh && child.name === "Fabric") {
       child.material.map = fabricTexture;
       child.material.needsUpdate = true;
@@ -52,7 +54,10 @@ const App = () => {
   const [bg, setbg] = useState("#f0f0f0");
   return (
     <div className="body">
-      <Canvas shadows camera={{ position: [-5, 200, 500], fov: 50 }}>
+      <Canvas
+        shadows
+        camera={{ position: [-5, 200, 500], fov: 50, near: 0.1, far: 50000 }}
+      >
         <color attach={"background"} args={[bg]} />
         <ambientLight intensity={0.1 * Math.PI} />
         <spotLight decay={0} position={[5, 5, -10]} angle={0.15} />

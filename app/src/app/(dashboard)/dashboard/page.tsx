@@ -19,7 +19,7 @@ const page = async () => {
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         {data.map((v) => (
-          <Card name={v.name} id={v.id} />
+          <Card name={v.name} id={v.id} image={v.thumbnail_path} />
         ))}
       </div>
     </div>

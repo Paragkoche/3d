@@ -2,44 +2,58 @@
 
 import { Canvas, useLoader } from "@react-three/fiber";
 import {
-  useGLTF,
   CubeCamera,
   Environment,
   OrbitControls,
   useTexture,
   Caustics,
+  useGLTF,
+  SoftShadows,
 } from "@react-three/drei";
 import { RGBELoader } from "three-stdlib";
-import "./App.css";
-import { useState } from "react";
-import { Button } from "react-day-picker";
-const Char = (props: any) => {
-  const { nodes, scene } = useGLTF("/model.glb");
+import * as THREE from "three";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { IdModelResponse } from "@/api/api";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API;
+
+interface CharProps {
+  file: string;
+  fabric: string;
+  color: string;
+  affectedMeshes: string[];
+}
+
+const Char: React.FC<CharProps> = ({ file, fabric, affectedMeshes }) => {
+  const { scene } = useGLTF(`${API_BASE_URL}${file}`);
+  const fabricTexture = useTexture(`${API_BASE_URL}${fabric}`);
   const texture = useLoader(
     RGBELoader,
     "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr"
   );
-  const fabricTexture = useTexture(props.fabric);
-  scene.traverse((child: any) => {
-    if (child.isMesh && child.name === "Fabric") {
-      child.material.map = fabricTexture;
-      child.material.needsUpdate = true;
+
+  useEffect(() => {
+    if (scene && fabricTexture && affectedMeshes) {
+      scene.traverse((child) => {
+        if (
+          child instanceof THREE.Mesh &&
+          affectedMeshes.includes(child.name)
+        ) {
+          child.material.map = fabricTexture;
+          child.material.needsUpdate = true;
+        }
+      });
     }
-  });
+  }, [scene, fabricTexture, affectedMeshes]);
 
-  console.log(nodes);
-
-  return (
+  return scene ? (
     <CubeCamera resolution={256} frames={1} envMap={texture}>
       {() => (
         <Caustics
-          color={"#000"}
+          color="#000"
           position={[0, 0.5, 0]}
           lightSource={[5, 5, 0.5]}
-          worldRadius={0.1}
-          ior={1.8}
-          backsideIOR={1.1}
-          intensity={1}
           causticsOnly={false}
           backside={false}
         >
@@ -47,46 +61,102 @@ const Char = (props: any) => {
         </Caustics>
       )}
     </CubeCamera>
-  );
+  ) : null;
 };
 
-export const Viewer = (props: { fabric: string[]; background: string[] }) => {
-  const [Fabric, setFabric] = useState(props.fabric[0]);
-  const [bg, setBg] = useState(props.background[0]);
+const SceneLighting: React.FC = () => (
+  <>
+    <ambientLight intensity={0.3} />
+    <spotLight intensity={1} angle={0.3} position={[10, 15, 10]} castShadow />
+    <SoftShadows size={25} focus={0.8} />
+  </>
+);
+
+const SceneEnvironment: React.FC = () => (
+  <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr" />
+);
+
+const SceneControls: React.FC = () => (
+  <OrbitControls
+    autoRotate
+    autoRotateSpeed={0.5}
+    enableDamping
+    dampingFactor={0.1}
+  />
+);
+
+export const Viewer: React.FC<IdModelResponse> = (props) => {
+  const [Fabric, setFabric] = useState(props.fibers[0]);
+  const [bg, setBg] = useState(props.bg_colors[0]);
+  const [currentVariant, setCurrentVariant] = useState<string>(props.file_path);
 
   return (
-    <div className="flex w-full h-full ">
+    <div className="flex w-full h-[calc(100dvh-64px)]">
       <Canvas shadows camera={{ position: [-5, 200, 500], fov: 50 }}>
-        <color attach={"background"} args={[bg]} />
-        <ambientLight intensity={0.1 * Math.PI} />
-        <spotLight decay={0} position={[5, 5, -10]} angle={0.15} />
-        <Char fabric={Fabric} color={bg} />
-        <Environment files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr" />
-        <OrbitControls
-          makeDefault
-          autoRotate
-          autoRotateSpeed={0.1}
-          minPolarAngle={0}
-          maxPolarAngle={Math.PI / 2}
+        <color attach="background" args={[bg.color_code]} />
+        <SceneLighting />
+        <Char
+          file={currentVariant}
+          fabric={Fabric.image_path}
+          affectedMeshes={props.affected_meshes.split(",")}
+          color={bg.color_code}
         />
+        <SceneEnvironment />
+        <SceneControls />
       </Canvas>
 
-      <div className="w-1/2 flex items-center justify-center">
-        <div className="flex w-full justify-around">
-          {props.fabric.map((v, i) => (
-            <Button key={i} onClick={() => setFabric(v)}>
-              <img className="w-12" src={v} />
-            </Button>
-          ))}
-        </div>
-        <div className="flex w-full justify-around">
-          {props.fabric.map((v, i) => (
+      {/* Control Panel */}
+      <div className="w-1/2 flex items-center justify-center flex-col gap-6">
+        <div>
+          <h1>Variants</h1>
+          <div className="flex flex-wrap gap-2">
             <Button
-              key={i}
-              onClick={() => setBg(v)}
-              className={`w-[24px] h-[24px] bg-[${v}]`}
-            ></Button>
-          ))}
+              variant="outline"
+              onClick={() => setCurrentVariant(props.file_path)}
+            >
+              Base Model
+            </Button>
+            {props.char_variants.map((variant, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                onClick={() => setCurrentVariant(variant.file_path)}
+              >
+                Variant {index + 1}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Fabric Selector */}
+        <div>
+          <h1>Fabrics</h1>
+          <div className="flex flex-wrap gap-2">
+            {props.fibers.map((v, i) => (
+              <Button key={i} variant="outline" onClick={() => setFabric(v)}>
+                <img
+                  className="w-[24px] h-[24px]"
+                  src={`${API_BASE_URL}${v.image_path}`}
+                  alt={`Fabric ${i}`}
+                />
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Background Color */}
+        <div>
+          <h1>Background Colors</h1>
+          <div className="flex flex-wrap gap-2">
+            {props.bg_colors.map((v, i) => (
+              <Button key={i} variant="outline" onClick={() => setBg(v)}>
+                <div
+                  className="w-[24px] h-[24px] rounded-full"
+                  style={{ backgroundColor: v.color_code }}
+                />
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

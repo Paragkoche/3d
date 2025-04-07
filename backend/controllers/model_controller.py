@@ -1,14 +1,13 @@
 from fastapi import HTTPException, status
 from uuid import uuid4
 from fastapi import APIRouter, Form, UploadFile, File, HTTPException, Depends
-from typing import List
+from typing import List, Optional
 import os
 import shutil
-
-from model.model import Model, Fiber, BgColor
+from playhouse.shortcuts import model_to_dict
+from model.model import CharVariant, Model, Fiber, BgColor
 from utils.auth import get_current_admin
 # from utils.converter import convert_max_to_glb
-from utils.s3 import upload_to_s3
 from config import UPLOAD_FOLDER
 
 router = APIRouter()
@@ -21,6 +20,8 @@ def create_model_with_fibers(
     model_file: UploadFile = File(...),
     fiber_files: List[UploadFile] = File(...),
     thumbnail: UploadFile = File(...),
+    variant_files: Optional[List[UploadFile]] = File(None),
+    affected_meshes: Optional[List[str]] = Form(None),  # ✅ New parameter
     admin=Depends(get_current_admin)
 ):
     # Save and upload model file
@@ -28,23 +29,20 @@ def create_model_with_fibers(
     model_file_location = f"{UPLOAD_FOLDER}/{model_uuid}_{model_file.filename}"
     with open(model_file_location, "wb") as buffer:
         shutil.copyfileobj(model_file.file, buffer)
-    # model_s3_url = upload_to_s3(
-    #     model_file_location, f"models/{os.path.basename(model_file_location)}")
 
     # Save and upload thumbnail
     thumbnail_uuid = uuid4()
     thumbnail_file_location = f"{UPLOAD_FOLDER}/{thumbnail_uuid}_{thumbnail.filename}"
     with open(thumbnail_file_location, "wb") as buffer:
         shutil.copyfileobj(thumbnail.file, buffer)
-    # thumbnail_s3_url = upload_to_s3(
-    #     thumbnail_file_location, f"thumbnails/{thumbnail.filename}")
 
-    # Create model record with thumbnail
+    # Create model record
     model = Model.create(
         name=name,
         file_path=f"/static/{model_uuid}_{model_file.filename}",
-        # Assuming this field exists in your Model
-        thumbnail_path=f"/static/{thumbnail_uuid}_{thumbnail.filename}"
+        thumbnail_path=f"/static/{thumbnail_uuid}_{thumbnail.filename}",
+        # ✅ Store affected meshes
+        affected_meshes=",".join(affected_meshes) if affected_meshes else None
     )
 
     # Add background colors
@@ -58,15 +56,33 @@ def create_model_with_fibers(
         fiber_file_location = f"{UPLOAD_FOLDER}/{fiber_uuid}_{fiber_file.filename}"
         with open(fiber_file_location, "wb") as buffer:
             shutil.copyfileobj(fiber_file.file, buffer)
-        # fiber_s3_url = upload_to_s3(
-        #     fiber_file_location, f"fibers/{fiber_file.filename}")
         fiber = Fiber.create(
             image_path=f"/static/{fiber_uuid}_{fiber_file.filename}", model=model)
         fibers.append(fiber)
 
+    # Upload char variants (L1, L2, L3)
+    char_variants = []
+    variant_names = ["L1", "L2", "L3"]
+    if variant_files:
+        for idx, variant_file in enumerate(variant_files):
+            variant_uuid = uuid4()
+            variant_file_location = f"{UPLOAD_FOLDER}/{variant_uuid}_{variant_file.filename}"
+            with open(variant_file_location, "wb") as buffer:
+                shutil.copyfileobj(variant_file.file, buffer)
+            char_variant = CharVariant.create(
+                name=f"L{idx}" if idx < len(
+                    variant_names) else f"Extra_{idx+1}",
+                file_path=f"/static/{variant_uuid}_{variant_file.filename}",
+                description=f"Extra_{idx+1} variation",
+                model=model
+            )
+            char_variants.append(char_variant)
+
     return {
         "model": model.__data__,
-        "fibers": [fiber.__data__ for fiber in fibers]
+        "fibers": [fiber.__data__ for fiber in fibers],
+        "char_variants": [variant.__data__ for variant in char_variants],
+        "affected_meshes": affected_meshes or []
     }
 
 
@@ -77,13 +93,31 @@ def get_models():
         model_data = model.__data__.copy()
         model_data["bg_colors"] = [bg.color_code for bg in model.bg_colors]
         model_data["fibers"] = [fiber.image_path for fiber in model.fibers]
+
+        # ✅ Convert affected_meshes back to a list
+        model_data["affected_meshes"] = (
+            model.affected_meshes.split(",") if model.affected_meshes else []
+        )
+
         models.append(model_data)
+
     return models
 
 
 @router.get("/fibers/")
 def get_fibers():
     return [fiber.__data__ for fiber in Fiber.select()]
+
+
+@router.get("/{id}")
+def get_model_by_id(id: int):
+    try:
+        models = Model.select().where(Model.id == id).prefetch(BgColor, Fiber, CharVariant)
+        model = next(iter(models))  # Get the first (and only) result
+        model_dict = model_to_dict(model, backrefs=True)
+    except StopIteration:
+        raise HTTPException(status_code=404, detail="Model not found")
+    return model_dict
 
 
 @router.put("/{model_id}/")
@@ -134,7 +168,7 @@ def update_model(
     return {"detail": "Model updated successfully", "model": model.__data__}
 
 
-@router.delete("/{model_id}/")
+@router.delete("/delete/{model_id}/")
 def delete_model(
     model_id: int,
     admin=Depends(get_current_admin)

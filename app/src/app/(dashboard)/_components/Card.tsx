@@ -6,14 +6,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Edit2Icon, EyeIcon } from "lucide-react";
+import {
+  DeleteIcon,
+  Edit2Icon,
+  EyeIcon,
+  Trash,
+  Trash2Icon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { deleteModel } from "@/api/api";
 
 interface props {
   name: string;
   id: string;
+  image: string;
 }
+const API_BASE_URL = process.env.NEXT_PUBLIC_API; // Change this to your FastAPI backend URL
 
 const Card = (props: props) => {
   const router = useRouter();
@@ -23,13 +32,19 @@ const Card = (props: props) => {
         <CardTitle className="text-sm font-medium">{props.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <img
-          className="rounded-md"
-          src="https://plus.unsplash.com/premium_photo-1681031465676-995faaaac5bf?q=80&w=2044&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-        />
+        <img className="rounded-md" src={API_BASE_URL + props.image} />
       </CardContent>
       <CardFooter className="w-full">
-        <div className=" w-full flex justify-end items-center">
+        <div className=" w-full flex justify-end items-center gap-3">
+          <Button
+            className="justify-end"
+            onClick={() => {
+              deleteModel(props.id);
+              router.refresh();
+            }}
+          >
+            <Trash2Icon />
+          </Button>
           <Button
             className="justify-end"
             onClick={() => router.push(`/dashboard/update/${props.id}`)}

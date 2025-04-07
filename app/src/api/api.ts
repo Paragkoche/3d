@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000"; // Change this to your FastAPI backend URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API; // Change this to your FastAPI backend URL
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -62,11 +62,53 @@ export async function uploadModelWithFibers(
 /**
  * Fetch all models.
  */
+export interface ModelResponse {
+  id: number;
+  name: string;
+  file_path: string;
+  thumbnail_path: string;
+  bg_colors: string[];
+  fibers: string[];
+  affected_meshes: string;
+}
+
+interface BgColor {
+  id: number;
+  color_code: string;
+}
+
+interface Fiber {
+  id: number;
+  image_path: string;
+}
+
+interface CharVariant {
+  id: number;
+  name: string;
+  file_path: string;
+  description: string;
+}
+
+export interface IdModelResponse {
+  id: number;
+  name: string;
+  file_path: string;
+  thumbnail_path: string;
+  bg_colors: BgColor[];
+  fibers: Fiber[];
+  char_variants: CharVariant[];
+  affected_meshes: string;
+}
+
 export async function getModels() {
-  const response = await api.get("/models/");
+  const response = await api.get<ModelResponse[]>("/models/");
   return response.data;
 }
 
+export async function getModelsId(id: string) {
+  const response = await api.get<IdModelResponse>(`/models/${id}`);
+  return response.data;
+}
 // -------------------- OPTIONAL UTILS -------------------- //
 
 /**
@@ -74,4 +116,15 @@ export async function getModels() {
  */
 export function logout() {
   localStorage.removeItem("token");
+}
+
+export async function deleteModel(id: string) {
+  const token = localStorage.getItem("token");
+
+  const response = await api.delete(`/models/delete/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
 }
