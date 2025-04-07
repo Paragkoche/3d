@@ -1,11 +1,22 @@
-import { getModels } from "@/api/api";
+"use client";
+
+import { useEffect, useState } from "react";
+import { getModels, ModelResponse } from "@/api/api";
 import Card from "../_components/Card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-const page = async () => {
-  const data: any[] = await getModels();
-  console.log(data);
+const Page = () => {
+  const [data, setData] = useState<ModelResponse[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const models = await getModels();
+      setData(models);
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="flex flex-1 flex-col space-y-2">
@@ -19,11 +30,16 @@ const page = async () => {
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         {data.map((v) => (
-          <Card name={v.name} id={v.id} image={v.thumbnail_path} />
+          <Card
+            key={v.id}
+            name={v.name}
+            id={v.id.toString()}
+            image={v.thumbnail_path}
+          />
         ))}
       </div>
     </div>
   );
 };
 
-export default page;
+export default Page;
