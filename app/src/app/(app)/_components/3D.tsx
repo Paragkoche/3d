@@ -5,7 +5,6 @@ import {
   CubeCamera,
   Environment,
   OrbitControls,
-  useTexture,
   Caustics,
   useGLTF,
   SoftShadows,
@@ -27,7 +26,14 @@ interface CharProps {
 
 const Char: React.FC<CharProps> = ({ file, fabric, affectedMeshes }) => {
   const { scene } = useGLTF(`${API_BASE_URL}${file}`);
-  const fabricTexture = useTexture(`${API_BASE_URL}${fabric}`);
+  const fabricTexture = useLoader(
+    THREE.TextureLoader,
+    `${API_BASE_URL}${fabric}`,
+    (load) => {
+      load.crossOrigin = "anonymous";
+    }
+  );
+
   const texture = useLoader(
     RGBELoader,
     "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr"
